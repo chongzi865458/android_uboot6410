@@ -1,0 +1,62 @@
+make: powerpc-linux-gcc: Command not found
+make[1]: powerpc-linux-gcc: Command not found
+make[1]: Entering directory `/home/chaosk/android_boot-android2.3-256M_v1.01/tools'
+make[1]: powerpc-linux-gcc: Command not found
+make[1]: Entering directory `/home/chaosk/android_boot-android2.3-256M_v1.01/tools'
+make[1]: powerpc-linux-gcc: Command not found
+make[1]: Entering directory `/home/chaosk/android_boot-android2.3-256M_v1.01/examples'
+/bin/sh: powerpc-linux-gcc: not found
+dirname: missing operand
+Try `dirname --help' for more information.
+/bin/sh: powerpc-linux-gcc: not found
+dirname: missing operand
+Try `dirname --help' for more information.
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+make[1]: *** No rule to make target `.depend', needed by `_depend'.  Stop.
+make[1]: powerpc-linux-gcc: Command not found
+make[1]: Entering directory `/home/chaosk/android_boot-android2.3-256M_v1.01/post'
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+make[1]: *** No rule to make target `.depend', needed by `_depend'.  Stop.
+make[1]: powerpc-linux-gcc: Command not found
+make[1]: Entering directory `/home/chaosk/android_boot-android2.3-256M_v1.01/post/cpu'
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+/bin/sh: powerpc-linux-gcc: not found
+make[1]: *** No rule to make target `.depend', needed by `_depend'.  Stop.
+make: *** [depend] Error 2

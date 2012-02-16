@@ -1,0 +1,9 @@
+for dir in tools examples post post/cpu ; do make -C $dir _depend ; done
+ln -s ../common/environment.c environment.c
+ln -s ../lib_generic/crc32.c crc32.c
+make[1]: Leaving directory `/home/chaosk/android_boot-android2.3-256M_v1.01/tools'
+make[1]: Nothing to be done for `_depend'.
+make[1]: Leaving directory `/home/chaosk/android_boot-android2.3-256M_v1.01/tools'
+make[1]: Leaving directory `/home/chaosk/android_boot-android2.3-256M_v1.01/examples'
+make[1]: Leaving directory `/home/chaosk/android_boot-android2.3-256M_v1.01/post'
+make[1]: Leaving directory `/home/chaosk/android_boot-android2.3-256M_v1.01/post/cpu'

@@ -1,0 +1,10 @@
+#!/bin/bash
+
+#
+# This script will create a u-boot binary for nand
+#
+
+
+rm u-boot-nand.bin;
+dd if=u-boot.bin of=u-boot-nand.bin bs=2048 count=256 conv=sync;
+chmod 755 u-boot-nand.bin;
