@@ -290,6 +290,187 @@ static __inline__ int abortboot(int bootdelay)
 # endif	/* CONFIG_AUTOBOOT_KEYED */
 #endif	/* CONFIG_BOOTDELAY >= 0  */
 
+static void ExecuteCmd(char *cmd)
+{
+	parse_string_outer(cmd, FLAG_PARSE_SEMICOLON | FLAG_EXIT_FROM_LOOP);
+}
+
+
+void arm_sdfuse(void)
+{
+	unsigned char select;
+	while(1)
+	{
+		printf("\n##### Select the fuction #####\n");
+		printf("[1] Flash all image\n");
+		printf("[2] Flash u-boot\n");
+		printf("[3] Flash kernel\n");
+		printf("[4] Flash ramdisk\n");
+		printf("[5] Flash system\n");	
+		printf("[6] Flash userdata\n");	
+		printf("[7] Erase cache\n");		
+		printf("[8] Exit\n");
+		printf("Enter your Selection:");
+	
+		select = getc();
+		printf("%c\n", select >= ' ' && select <= 127 ? select : ' ');	
+	
+		switch(select) 
+		{
+			case '1':
+				ExecuteCmd("sdfuse flashall");
+				break;
+			
+			case '2':
+				ExecuteCmd("sdfuse flash bootloader u-boot.bin");
+				break;
+					
+			case '3':
+				ExecuteCmd("sdfuse flash kernel kernel.img");
+				break;
+			
+			case '4':
+				ExecuteCmd("sdfuse flash ramdisk ramdisk-yaffs.img");
+				break;
+			
+			case '5':
+				ExecuteCmd("sdfuse flash system system.img");
+				break;
+			
+			case '6':
+				ExecuteCmd("sdfuse flash userdata userdata.img");
+				break;
+
+			case '7':
+				ExecuteCmd("sdfuse erase cache");
+				break;
+
+			case '8':
+				return;
+			
+			default:
+				break;
+		}
+	}
+}
+void lcd_size_config(void)
+{
+	unsigned char select;
+	char *ppp_dev[6]={"lcdsize=35","lcdsize=43","lcdsize=56","lcdsize=70","lcdsize=VGA800","lcdsize=XGA1024"};
+	char cmdline[256]="setenv bootargs root=/dev/mtdblock2 rootfstype=yaffs2 init=/init nconsole=tty1 console=ttySAC0,115200 android.ril=s3c2410_serial1 ";
+	
+lcd_size_config:
+	printf("\n##### Select the lcdsize #####\n");
+	printf("[1] 3.5\n");
+	printf("[2] 4.3\n");
+	printf("[3] 5.6\n");
+	printf("[4] 7.0\n");
+	printf("[5] VGA||8.0||10.4\n");
+	printf("[6] hdmi\n");
+	printf("[7] Exit\n");
+	printf("Enter your Selection:");
+	
+	select = getc();
+	printf("%c\n", select >= ' ' && select <= 127 ? select : ' ');
+	
+	switch(select) 
+	{
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+			sprintf(cmdline + strlen(cmdline), "%s", ppp_dev[select-'1']);
+			ExecuteCmd(cmdline);
+			ExecuteCmd("saveenv");
+			break;
+
+		case '7':
+			break;
+			
+		default:
+			goto lcd_size_config;
+	}
+}
+
+void ARMMenu(void)
+{
+	unsigned char select;
+	char *command;	
+	char cramfs_cmdline[256]="setenv bootargs ";
+
+	while(1) {
+		printf("\n");
+		printf("###################### OK6410 User Menu for ANDROID #####################\n");	
+		
+		printf("[f] Format the nand flash\n");		
+		printf("[s] Burn image from SD card\n");
+		printf("[u] Use fastboot\n");
+		printf("[c] Configure the radio device\n");	
+		printf("[l] configure the lcd size\n");							
+		printf("[b] Boot the system\n");
+		printf("[r] Reboot the u-boot\n");
+		printf("[e] Exit to command line\n");								
+
+		printf("-----------------------------Select---------------------------------\n");
+		printf("Enter your Selection:");
+
+		select = getc();
+		printf("%c\n", select >= ' ' && select <= 127 ? select : ' ');
+
+		switch(select) 
+		{		
+			//[b] Boot the system		
+			case 'B':
+			case 'b':
+				ExecuteCmd(getenv ("bootcmd"));
+				break;
+			
+			//[c] Configure the radio device
+			case 'C':
+			case 'c':
+	//			realarm_radio_config();
+				break;	
+	
+			//[e] Exit to command line
+			case 'E':
+			case 'e':
+				return;							
+							
+			//[f] Format the nand flash						
+			case 'F': case 'f':
+				ExecuteCmd("nand scrub");
+				break;
+			
+			//[r] Reboot the u-boot
+			case 'R': case 'r':
+				ExecuteCmd("reset");
+				break;
+				
+			//[s] Burn image from SD card
+			case 'S': case 's':
+				arm_sdfuse();
+				break;
+				
+			//[u] Use fastboot
+			case 'U': case 'u':
+	//			ExecuteCmd("fastboot");
+				break;	
+				
+			case 'l':case 'L':
+				lcd_size_config();
+		//		command = getenv ("bootargs");			
+		//		sprintf(cramfs_cmdline + strlen(cramfs_cmdline),"%s %s",command,"calibrate");
+		//		ExecuteCmd(cramfs_cmdline);
+		//		ExecuteCmd(getenv ("bootcmd"));
+				break;							
+
+			default:
+				break;
+		}
+	}
+}
 /****************************************************************************/
 
 void main_loop (void)
@@ -442,7 +623,7 @@ void main_loop (void)
 	    video_banner();
 	}
 #endif
-
+    //         ARMMenu();
 	/*
 	 * Main Loop for Monitor Command Processing
 	 */
