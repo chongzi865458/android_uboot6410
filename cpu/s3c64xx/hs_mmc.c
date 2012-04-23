@@ -1,24 +1,29 @@
 #include <common.h>
-
 #if defined(CONFIG_SMDK6400) || defined(CONFIG_SMDK6410) || defined(CONFIG_SMDK6430)
 
 #define CONFIG_SUPPORT_MMC_PLUS
 #define HCLK_OPERATION
 #undef DEBUG_HSMMC
+//#define DEBUG_HSMMC
 #ifdef DEBUG_HSMMC
-#define dbg(x...)       printf(x)
+#define dbg(x...) printf(x)
 #else
 #define dbg(x...)       do { } while (0)
 #endif
 
 #include <regs.h>
-
 #include <linux/mmc/mmc.h>
+#include <glamo-mmc.h>
+#include <linux-mmc-protocol.h>
+#include <s3c6410.h>
 #include <linux/mmc/protocol.h>
 #include <asm/io.h>
 #include <movi.h>
+#include <mmc.h>
 
 #include "hs_mmc.h"
+
+static ulong mmc_bread (int dev_num, ulong blknr, ulong blkcnt, ulong* dst);
 
 #if defined(CONFIG_S3C6400)
 extern ulong virt_to_phy_smdk6400(ulong addr);
@@ -33,6 +38,8 @@ extern ulong virt_to_phy_smdk6430(ulong addr);
 #define SDI_Compare_buffer_HSMMC	(0x51000000+(0x600000))
 
 #define Card_OneBlockSize_ver1		512
+#define MMC_BLOCK_SIZE Card_OneBlockSize_ver1
+#define MMC_DEFAULT_RCA			(1<<16)
 
 /*  Global variables */
 static uint *Tx_buffer_HSMMC;
@@ -64,9 +71,15 @@ static uint card_mid = 0;
 
 /* extern variables */
 extern uint movi_hc;
+enum card_type card_type;
 
 /* extern functions */
 extern ulong get_HCLK(void);
+static block_dev_desc_t mmc_dev;
+block_dev_desc_t* mmc_get_dev(int dev)
+{
+	return( (block_dev_desc_t*) &mmc_dev);
+}
 
 #define s3c_hsmmc_readl(x)	readl((ELFIN_HSMMC_BASE + (HSMMC_CHANNEL * 0x100000)) + (x))
 #define s3c_hsmmc_readw(x)	readw((ELFIN_HSMMC_BASE + (HSMMC_CHANNEL * 0x100000)) + (x))
@@ -75,6 +88,20 @@ extern ulong get_HCLK(void);
 #define s3c_hsmmc_writel(v,x)	writel((v),(ELFIN_HSMMC_BASE + (HSMMC_CHANNEL * 0x100000)) + (x))
 #define s3c_hsmmc_writew(v,x)	writew((v),(ELFIN_HSMMC_BASE + (HSMMC_CHANNEL * 0x100000)) + (x))
 #define s3c_hsmmc_writeb(v,x)	writeb((v),(ELFIN_HSMMC_BASE + (HSMMC_CHANNEL * 0x100000)) + (x))
+
+#define UNSTUFF_BITS(resp,start,size)                                   \
+        ({                                                              \
+                const int __size = size;                                \
+                const u32 __mask = (__size < 32 ? 1 << __size : 0) - 1; \
+                const int __off = 3 - ((start) / 32);                   \
+                const int __shft = (start) & 31;                        \
+                u32 __res;                                              \
+                                                                        \
+                __res = resp[__off] >> __shft;                          \
+                if (__size + __shft > 32)                               \
+                        __res |= resp[__off-1] << ((32 - __shft) & 31); \
+                __res & __mask;                                         \
+        })
 
 #if 0
 static int wait_for_w_buf_ready (void)
@@ -109,20 +136,28 @@ static int wait_for_cmd_done (void)
 	uint i;
 	ushort n_int, e_int;
 
-	udelay(5000);
-
 	dbg("wait_for_cmd_done\n");
-	for (i = 0; i < 0x20000000; i++) {
+#if 0
+	for (i = 0; i < 5000000; i++) {
+		udelay(1);//5s timeout
+#else
+	while(1){
+#endif
 		n_int = s3c_hsmmc_readw(HM_NORINTSTS);
 		dbg("  HM_NORINTSTS: %04x\n", n_int);
-		if (n_int & 0x8000) break;
-		if (n_int & 0x0001) return 0;
+		if (n_int & 0x8000)
+			/* any error */
+			break;
+		if (n_int & 0x0001)
+			/* command complete */
+			return 0;
 	}
 
 	e_int = s3c_hsmmc_readw(HM_ERRINTSTS);
 	s3c_hsmmc_writew(e_int, HM_ERRINTSTS);
 	s3c_hsmmc_writew(n_int, HM_NORINTSTS);
-	dbg("cmd error1: 0x%04x, HM_NORINTSTS: 0x%04x\n", e_int, n_int);
+
+	printf("cmd error: 0x%04x, HM_NORINTSTS: 0x%04x\n", e_int, n_int);
 	return 1;
 }
 
@@ -148,6 +183,14 @@ static void ClearTransferCompleteStatus(void)
 	s3c_hsmmc_writew(s3c_hsmmc_readw(HM_NORINTSTS) | (1 << 1), HM_NORINTSTS);
 	while (s3c_hsmmc_readw(HM_NORINTSTS) & 0x2) {
 		s3c_hsmmc_writew(s3c_hsmmc_readw(HM_NORINTSTS) | (1 << 1), HM_NORINTSTS);
+	}
+}
+
+static void ClearDMAStatus(void)
+{
+	s3c_hsmmc_writew(s3c_hsmmc_readw(HM_NORINTSTS) | (1 << 3), HM_NORINTSTS);
+	while (s3c_hsmmc_readw(HM_NORINTSTS) & 0x8) {
+		s3c_hsmmc_writew(s3c_hsmmc_readw(HM_NORINTSTS) | (1 << 3), HM_NORINTSTS);
 	}
 }
 
@@ -664,8 +707,9 @@ static void clock_config (uint clksrc, uint div)
 		clksrc = HCLK;
 
 	freq = base_freq / (div * 2);
-	dbg("freq = %dMHz\n", freq / (1000000));
+	printf("         Freq = %dMHz\n", freq / (1000000));
 
+#if 0
 	if (mmc_card) {
 		if (mmc_spec == 4) {
 			/* It is necessary to enable the high speed mode
@@ -694,6 +738,7 @@ static void clock_config (uint clksrc, uint div)
 		} else
 			dbg("Old version SD card can not support working frequency higher than 25MHz\n");
 	}
+#endif
 
 	/* When Higher than 25MHz, it is necessary
 	 * to enable high speed mode of the host controller.
@@ -756,19 +801,37 @@ static void check_dma_int (void)
 {
 	uint i;
 
-	for (i = 0; i < 0x10000000; i++) {
+	HS_DMA_END = 0;
+#if 0
+	for (i = 0; i < 5000000; i++) {
+		udelay(1);//5s timeout
+#else
+	while(1){
+#endif
+		if (s3c_hsmmc_readw(HM_NORINTSTS) & 0x0008) {
+			dbg("DMA interrupt\n");
+			HS_DMA_END = 1;
+			s3c_hsmmc_writew(s3c_hsmmc_readw(HM_NORINTSTS) | 0x0008, HM_NORINTSTS);
+			goto ret;
+		}
+
 		if (s3c_hsmmc_readw(HM_NORINTSTS) & 0x0002) {
 			dbg("Transfer Complete\n");
-			HS_DMA_END = 1;
+			HS_DMA_END = 2;
 			s3c_hsmmc_writew(s3c_hsmmc_readw(HM_NORINTSTS) | 0x0002, HM_NORINTSTS);
-			break;
+			goto ret;
 		}
 
 		if (s3c_hsmmc_readw(HM_NORINTSTS) & 0x8000) {
 			printf("error found: %04x\n", s3c_hsmmc_readw(HM_ERRINTSTS));
-			break;
+			HS_DMA_END = -1;
+			goto ret;
 		}
 	}
+
+	printf("ERROR: DMA interrupt timeout\n");
+ret:
+	return;
 }
 
 static uint process_ext_csd (void)
@@ -794,10 +857,11 @@ static uint process_ext_csd (void)
 	return (((ext_csd[215] << 24) | (ext_csd[214] << 16) | (ext_csd[213] << 8) | ext_csd[212]) / (2 * 1024));
 }
 
+#if 0
 static void display_card_info (void)
 {
 	uint card_size;
-	
+
 	if (mmc_card && movi_hc) {
 		card_size = process_ext_csd();
 	} else {
@@ -823,11 +887,11 @@ static void display_card_info (void)
 			c_size_multi = ((resp[1] >> 7) & 0x7);
 			c_size = ((resp[2] & 0x3) << 10) | ((resp[1] >> 22) & 0x3ff);
 			card_size = (1 << read_bl_len) * (c_size + 1) * (1 << (c_size_multi + 2)) / 1048576;
-			
+
 			dbg(" c_size: %d\n", c_size);
 			dbg(" c_size_multi: %d\n", c_size_multi);
-		}		
-		
+		}
+
 		dbg(" Total Card Size: %d MByte\n\n", card_size + 1);
 	}
 
@@ -841,6 +905,35 @@ static void display_card_info (void)
 
 	printf("\n");
 }
+#else
+static void print_sd_cid(const struct sd_cid *cid)
+{
+	switch (card_type) {
+	case CARDTYPE_NONE:
+		puts("(None) / ");
+		break;
+	case CARDTYPE_MMC:
+		puts("MMC / ");
+		break;
+	case CARDTYPE_SD:
+		puts("SD / ");
+		break;
+	case CARDTYPE_SD20:
+		puts("SD 2.0 / ");
+		break;
+	case CARDTYPE_SDHC:
+		puts("SD 2.0 SDHC / ");
+		break;
+	}
+
+	printf("Manufacturer: 0x%02X",cid->mid);
+	printf(",OEM: \"%c%c/%c%c%c%c%c",cid->oid_0,cid->oid_1,cid->pnm_0,cid->pnm_1,cid->pnm_2,cid->pnm_3,cid->pnm_4);
+	printf("\",REV: %d.%d",cid->prv >> 4,cid->prv & 15);
+	printf(",S/N: %d",cid->psn_0 << 24 | cid->psn_1 << 16 | cid->psn_2 << 8 | cid->psn_3);
+	printf(",DATE: %d/%d",2000 + ((cid->mdt_0 & 15) << 4)+((cid->mdt_1 & 0xf0) >> 4),cid->mdt_1 & 15);
+	printf("\n");
+}
+#endif
 
 static void DataRead_ForCompare (int StartAddr)
 {
@@ -930,6 +1023,18 @@ int hsmmc_init (void)
 {
 	u32 reg;
 	uint width;
+	int resp;
+	int hcs;
+	int retries = 50;
+	u8 response[16];
+	unsigned int r1[4];
+	struct sd_cid *sd_cid = (struct sd_cid *)response;
+	struct mmc_csd *csd = (struct mmc_csd *)response;
+	u8 *p8 = (u8 *)&r1[0];
+	unsigned int sd_sectors = 0;
+	/* we need to shift result by 8 bits spread over 4 x 32-bit regs */
+	u8 mangle[] = { 7, 0, 1, 2, 11, 4, 5, 6, 15, 8, 9, 10, 0, 12, 13, 14 };
+	int n;
 
 	width = 4;
 
@@ -952,56 +1057,133 @@ int hsmmc_init (void)
 	/* MMC_GO_IDLE_STATE */
 	issue_command(MMC_GO_IDLE_STATE, 0x00, 0, 0);
 
-	ocr_check = 1;
+	udelay(100000);
+	udelay(100000);
+	udelay(100000);
+	udelay(100000);
 
-	if (set_mmc_ocr()) {
-		mmc_card = 1;
-		dbg("MMC card is detected\n");
-	} else if (set_sd_ocr()) {
-		mmc_card = 0;
-		dbg("SD card is detected\n");
-	} else {
-		printf("0 MB\n");
-		return 0;
+	/* SDHC card? */
+
+	resp = issue_command(SD_SEND_IF_COND, 0x000001aa,
+		0, MMC_CMD_BCR | MMC_RSP_R7);
+	if (resp && ((s3c_hsmmc_readl(HM_RSPREG0) & 0xff) == 0xaa)) {
+		card_type = CARDTYPE_SD20; /* 2.0 SD, may not be SDHC */
+		hcs = 0x40000000;
 	}
 
-	ocr_check = 0;
+	/* Well, either way let's say hello in SD card protocol */
 
-	/* Check the attached card and place the card
-	 * in the IDENT state rHM_RSPREG0
-	 */
-	issue_command(MMC_ALL_SEND_CID, 0, 0, MMC_RSP_R2);
+	while (retries--) {
 
-	/* Manufacturer ID */
-	card_mid = (s3c_hsmmc_readl(HM_RSPREG3) >> 16) & 0xFF;
+		udelay(100000);
+		udelay(100000);
+		udelay(100000);
 
-	dbg("Product Name : %c%c%c%c%c%c\n", ((s3c_hsmmc_readl(HM_RSPREG2) >> 24) & 0xFF),
-	       ((s3c_hsmmc_readl(HM_RSPREG2) >> 16) & 0xFF), ((s3c_hsmmc_readl(HM_RSPREG2) >> 8) & 0xFF), (s3c_hsmmc_readl(HM_RSPREG2) & 0xFF),
-	       ((s3c_hsmmc_readl(HM_RSPREG1) >> 24) & 0xFF), ((s3c_hsmmc_readl(HM_RSPREG1) >> 16) & 0xFF));
+		resp = issue_command(MMC_APP_CMD, 0x00000000, 0,
+			MMC_RSP_R1);
+		if (!resp)
+			continue;
+		resp = issue_command(SD_APP_OP_COND, hcs | 0x00300000, 0,
+			MMC_RSP_R3);
+		if (!resp)
+			continue;
 
-	// Send RCA(Relative Card Address). It places the card in the STBY state
-	rca = (mmc_card) ? 0x0001 : 0x0000;
-	issue_command(MMC_SET_RELATIVE_ADDR, rca<<16, 0, MMC_RSP_R1);
+		if ((s3c_hsmmc_readl(HM_RSPREG0) >> 24) & (1 << 6)) { /* asserts block addressing */
+			retries = -2;
+			card_type = CARDTYPE_SDHC;
+		}
 
-	if (!mmc_card)
-		rca = (s3c_hsmmc_readl(HM_RSPREG0) >> 16) & 0xFFFF;
-
-	dbg("Enter to the Stand-by State\n");
-
-	issue_command(MMC_SEND_CSD, rca<<16, 0, MMC_RSP_R2);
-
-	if (mmc_card) {
-		mmc_spec = (s3c_hsmmc_readl(HM_RSPREG3) >> 18) & 0xF;
-		dbg("mmc_spec=%d\n", mmc_spec);
+		if ((s3c_hsmmc_readl(HM_RSPREG0) >> 24) & (1 << 7)) { /* not busy */
+			retries = -2;
+			if (card_type == CARDTYPE_NONE)
+				card_type = CARDTYPE_SD;
+			break;
+		}
+	}
+	if (retries == -1) {
+		puts("no response\n");
+		return -2;
 	}
 
-	issue_command(MMC_SELECT_CARD, rca<<16, 0, MMC_RSP_R1);
-	dbg("Enter to the Transfer State\n");
+	if (!issue_command(MMC_ALL_SEND_CID, 0, 0, MMC_RSP_R2)) {
+		puts("CID broken\n");
+		return -3;
+	}
 
-	display_card_info();
+	r1[0] = s3c_hsmmc_readl(HM_RSPREG3);
+	r1[1] = s3c_hsmmc_readl(HM_RSPREG2);
+	r1[2] = s3c_hsmmc_readl(HM_RSPREG1);
+	r1[3] = s3c_hsmmc_readl(HM_RSPREG0);
+
+	for (n = 0; n < 16; n++)
+		response[n] = p8[mangle[n]];
+
+	switch (card_type) {
+	case CARDTYPE_SD:
+	case CARDTYPE_SD20:
+	case CARDTYPE_SDHC:
+
+		print_sd_cid(sd_cid);
+		resp = issue_command(SD_SEND_RELATIVE_ADDR, MMC_DEFAULT_RCA,
+				0, MMC_RSP_R6);
+		rca = s3c_hsmmc_readl(HM_RSPREG0) >> 16;
+		break;
+
+	default:
+		return 1;
+	}
+
+	/* grab the CSD */
+
+	resp = issue_command(MMC_SEND_CSD, rca << 16, 0, MMC_RSP_R2);
+	if (resp) {
+
+		r1[0] = s3c_hsmmc_readl(HM_RSPREG3);
+		r1[1] = s3c_hsmmc_readl(HM_RSPREG2);
+		r1[2] = s3c_hsmmc_readl(HM_RSPREG1);
+		r1[3] = s3c_hsmmc_readl(HM_RSPREG0);
+		for (n = 0; n < 16; n++)
+			response[n] = p8[mangle[n]];
+
+		switch (card_type) {
+		case CARDTYPE_SDHC:
+			puts("         SDHC size: ");
+			sd_sectors = (UNSTUFF_BITS(((u32 *)&response[0]), 48, 22)
+								    + 1) << 10;
+			printf("%d",sd_sectors / 2048);
+			break;
+		default:
+			puts("         MMC/SD size: ");
+#if 0
+			sd_sectors = ((((unsigned long)1 << csd->c_size_mult1) *
+					(unsigned long)(csd->c_size)) >> 9);
+			printf("%d",sd_sectors / 2048);
+#else
+			uint c_size,c_size_multi,read_bl_len;
+			uint card_size;
+			read_bl_len = ((r1[1] >> 8) & 0xf);
+			c_size_multi = ((r1[2] >> 7) & 0x7);
+			c_size = ((r1[1] & 0x3) << 10) | ((r1[2] >> 22) & 0x3ff);
+			card_size = (1 << read_bl_len) * (c_size + 1) * (1 << (c_size_multi + 2)) / 1048576;
+			printf("%d",card_size);
+#endif
+			break;
+		}
+		puts(" MiB\n");
+	} else
+		puts("CSD grab broken\n");
+
+	resp = issue_command(MMC_SELECT_CARD, rca<<16, 0, MMC_RSP_R1);
+	if (!resp)
+		return 1;
 
 	/* Operating Clock setting */
-	clock_config(SD_EPLL, 2);	// Divisor 1 = Base clk /2      ,Divisor 2 = Base clk /4, Divisor 4 = Base clk /8 ...
+	if (movi_hc){
+		clock_config(SD_EPLL, 1);	// Divisor 1 = Base clk /2      ,Divisor 2 = Base clk /4, Divisor 4 = Base clk /8 ...
+	}
+	else{
+		clock_config(SD_EPLL, 2);
+	}
 
 	while (set_bus_width(width));
 	while (!check_card_status());
@@ -1010,6 +1192,15 @@ int hsmmc_init (void)
 	while (!issue_command(MMC_SET_BLOCKLEN, 512, 0, MMC_RSP_R1));
 
 	s3c_hsmmc_writew(0xffff, HM_NORINTSTS);
+
+	mmc_dev.if_type = IF_TYPE_MMC;
+	mmc_dev.part_type = PART_TYPE_DOS;
+	mmc_dev.dev = 0;
+	mmc_dev.blksz = MMC_BLOCK_SIZE;
+	sprintf(mmc_dev.vendor, "Man %02x %02x %02x Snr %02x %02x %02x", 0x00, 0x01, 0x02, 0x01, 0x02, 0x03);
+	sprintf(mmc_dev.product, "%s", "MMC4");
+	sprintf(mmc_dev.revision, "%x %x", 0x01, 0x01);
+	mmc_dev.block_read = mmc_bread;
 
 	return 0;
 }
@@ -1079,55 +1270,80 @@ void movi_write (uint addr, uint start_blk, uint blknum)
 
 void movi_read (uint addr, uint start_blk, uint blknum)
 {
-	uint blksize; //j, , Addr_temp = start_blk;
-	uint dma = 0, cmd, multi; //, TotalReadByte, read_blk_cnt = 0;
+	uint dma=0,cmd,multi_blk,i,count,spare;
 
-	rd_cnt_HSMMC = 0;
-	HS_DMA_END = 0;
-	BlockNum_HSMMC = 0;
-	rd_cnt_HSMMC = 0;
-	ReadBlockCnt_INT = 0;
-
-	BlockNum_HSMMC = blknum;
-
-	blksize = Card_OneBlockSize_ver1;
-
-	while (!check_card_status());
-
+	/*Enable interrupt*/
 	s3c_hsmmc_writew(s3c_hsmmc_readw(HM_NORINTSTSEN) & ~(DMA_STS_INT_EN | BLOCKGAP_EVENT_STS_INT_EN), HM_NORINTSTSEN);
 	s3c_hsmmc_writew((HM_NORINTSIGEN & ~(0xffff)) | TRANSFERCOMPLETE_SIG_INT_EN, HM_NORINTSIGEN);
 
-	SetSystemAddressReg(addr);		// AHB System Address For Write
-	dma = 1;
+	/*clear interrupt*/
+	ClearCommandCompleteStatus();
 
-	set_blksize_register(7, 512);		// Maximum DMA Buffer Size, Block Size
-	set_blkcnt_register(BlockNum_HSMMC);	// Block Numbers to Write
+	ClearDMAStatus();
+	ClearTransferCompleteStatus();
 
-	if (movi_hc)
-		set_arg_register(start_blk);		// Card Start Block Address to Write
-	else
-		set_arg_register(start_blk * 512);	// Card Start Block Address to Write
+	spare = blknum;
+	count = ( (blknum * Card_OneBlockSize_ver1) - 1 ) / (Card_OneBlockSize_ver1 * 512) + 1;
 
-	cmd = (blknum > 1) ? 18 : 17;
-	multi = (blknum > 1);
+	for(i=0;i<count;i++){
+		while(!check_card_status());
 
-	set_transfer_mode_register(multi, 1, multi, 1, dma);
-	set_cmd_register(cmd, 1, MMC_RSP_R1);
+		SetSystemAddressReg(addr);                           //AHB System Address For Write
+		addr += Card_OneBlockSize_ver1 * 512;                //256K ++
 
-	if (wait_for_cmd_done()) {
-		printf(("Command NOT Complete\n"));
-	} else
+		set_blksize_register(6,Card_OneBlockSize_ver1);      //Maximum DMA Buffer Size, Block Size
+		set_blkcnt_register((spare > 512) ? 512 : spare);    //Block Numbers to read
+
+		/*Card Start Block Address to read*/
+		if (movi_hc){
+			set_arg_register(start_blk);
+		}else{
+			set_arg_register(start_blk*Card_OneBlockSize_ver1);
+		}
+
+		start_blk += 512;
+
+		dma = 1;
+		multi_blk = (spare > 1);
+		cmd = multi_blk ? 18 : 17;
+
+		if(spare>512){
+			spare -= 512;
+		}
+
+		/*CMD17 signle block, CMD18 mutil block read*/
+		set_transfer_mode_register(multi_blk,1,1,multi_blk,dma);
+		set_cmd_register(cmd,1,MMC_RSP_R1);
+
+		if (wait_for_cmd_done()){
+			printf("ERROR: Command NOT Complete\n");
+	        goto error;
+		}
+
+		/*wait for transfer complete*/
+		check_dma_int();
+
+error:
 		ClearCommandCompleteStatus();
 
+		ClearDMAStatus();
+		ClearTransferCompleteStatus();
+	}
 
-	check_dma_int();
-	while (!HS_DMA_END);
-	dbg(("\nDMA Read End\n"));
+	return;
+}
 
-	HS_DMA_END = 0;
-	BlockNum_HSMMC = 0;
-	rd_cnt_HSMMC = 0;
-	ReadBlockCnt_INT = 0;
+static ulong mmc_bread (int dev_num, ulong blknr, ulong blkcnt, ulong* dst)
+{
+	/* Note: blknr is NOTHING like blknum! */
+
+	if (dst >= 0xc0000000)
+		dst = virt_to_phys(dst);
+
+	if (blkcnt != 0)
+		movi_read((uint) dst, (uint) blknr, (uint) blkcnt);
+
+	return blkcnt;
 }
 
 static void write_test (uint test, uint start_blk, uint blknum)

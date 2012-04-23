@@ -64,7 +64,7 @@
 #define CONFIG_SETUP_MEMORY_TAGS
 #define CONFIG_CMDLINE_TAG
 #define CONFIG_INITRD_TAG
-
+#define CONFIG_MMC		1
 /*
  * Architecture magic and machine type
  */
@@ -150,9 +150,11 @@
 
 #define CONFIG_BAUDRATE		115200
 
+
 /***********************************************************
  * Command definition
  ***********************************************************/
+//jhk add FAT
 #define CONFIG_COMMANDS \
 			(CONFIG_CMD_DFL	| \
 			CFG_CMD_CACHE	| \
@@ -162,6 +164,7 @@
 			CFG_CMD_LOADB	| \
 			CFG_CMD_ENV	| \
 			CFG_CMD_NAND	| \
+			CFG_CMD_FAT	| \
 			CFG_CMD_MOVINAND| \
 			CFG_CMD_ONENAND	| \
 			CFG_CMD_DATE	| \

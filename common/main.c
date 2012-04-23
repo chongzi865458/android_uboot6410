@@ -623,7 +623,7 @@ void main_loop (void)
 	    video_banner();
 	}
 #endif
-    //         ARMMenu();
+            ARMMenu();
 	/*
 	 * Main Loop for Monitor Command Processing
 	 */

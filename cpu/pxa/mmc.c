@@ -39,7 +39,7 @@ block_dev_desc_t * mmc_get_dev(int dev)
 {
 	return ((block_dev_desc_t *)&mmc_dev);
 }
-
+extern block_dev_desc_t * mmc_get_dev(int dev);
 /*
  * FIXME needs to read cid and csd info to determine block size
  * and other parameters

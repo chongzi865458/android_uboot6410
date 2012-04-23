@@ -95,7 +95,7 @@
 #define CFG_DISCOVER_PHY
 #endif
 
-#ifndef CONFIG_COMMANDS
+#ifndef CONFIG_COMMANDS //CMD_FAT jhk add
 #define CONFIG_COMMANDS	(CONFIG_CMD_DFL   \
 			 | CFG_CMD_ASKENV \
 			 | CFG_CMD_DHCP   \
