@@ -1,0 +1,266 @@
+--- ../aaa/u-boot-mini6410/cpu/s3c64xx/hs_mmc.c	2010-05-25 18:36:12.000000000 +0800
++++ ./cpu/s3c64xx/hs_mmc.c	2010-08-17 21:19:38.000000000 +0800
+@@ -35,8 +37,11 @@
+ #define SDI_Compare_buffer_HSMMC	(0x51000000+(0x600000))
+ 
+ #define Card_OneBlockSize_ver1		512
++#define MMC_BLOCK_SIZE Card_OneBlockSize_ver1
+ 
+ /*  Global variables */
++int movi_ch = 0;
++static vu_long regs;
+ static uint *Tx_buffer_HSMMC;
+ static uint *Rx_buffer_HSMMC;
+ static uint *Compare_buffer_HSMMC;
+@@ -64,19 +69,15 @@
+ static ulong HCLK;
+ static uint card_mid = 0;
+ 
+-/* extern variables */
+-extern uint movi_hc;
+-
+ /* extern functions */
+ extern ulong get_HCLK(void);
+ 
+-#define s3c_hsmmc_readl(x)	readl((ELFIN_HSMMC_BASE + (HSMMC_CHANNEL * 0x100000)) + (x))
+-#define s3c_hsmmc_readw(x)	readw((ELFIN_HSMMC_BASE + (HSMMC_CHANNEL * 0x100000)) + (x))
+-#define s3c_hsmmc_readb(x)	readb((ELFIN_HSMMC_BASE + (HSMMC_CHANNEL * 0x100000)) + (x))
+-
+-#define s3c_hsmmc_writel(v,x)	writel((v),(ELFIN_HSMMC_BASE + (HSMMC_CHANNEL * 0x100000)) + (x))
+-#define s3c_hsmmc_writew(v,x)	writew((v),(ELFIN_HSMMC_BASE + (HSMMC_CHANNEL * 0x100000)) + (x))
+-#define s3c_hsmmc_writeb(v,x)	writeb((v),(ELFIN_HSMMC_BASE + (HSMMC_CHANNEL * 0x100000)) + (x))
++static block_dev_desc_t mmc_dev;
++
++block_dev_desc_t* mmc_get_dev(int dev)
++{
++	return( (block_dev_desc_t*) &mmc_dev);
++}
+ 
+ #if 0
+ static int wait_for_w_buf_ready (void)
+@@ -111,41 +112,45 @@
+ 	uint i;
+ 	ushort n_int, e_int;
+ 
++	udelay(5000);
++
+ 	dbg("wait_for_cmd_done\n");
+-	for (i=0; i<0x20000000; i++) {
+-		n_int = s3c_hsmmc_readw(HM_NORINTSTS);
++	for (i = 0; i < 0x20000000; i++) {
++		n_int = readw(regs + HM_NORINTSTS);
+ 		dbg("  HM_NORINTSTS: %04x\n", n_int);
+ 		if (n_int & 0x8000) break;
+ 		if (n_int & 0x0001) return 0;
+ 	}
+ 
+-	e_int = s3c_hsmmc_readw(HM_ERRINTSTS);
+-	s3c_hsmmc_writew(e_int, HM_ERRINTSTS);
+-	s3c_hsmmc_writew(n_int, HM_NORINTSTS);
++	e_int = readw(regs + HM_ERRINTSTS);
++	writew(e_int, regs + HM_ERRINTSTS);
++	writew(n_int, regs + HM_NORINTSTS);
+ 	dbg("cmd error1: 0x%04x, HM_NORINTSTS: 0x%04x\n", e_int, n_int);
+-	return -1;
++	return 1;
+ }
+ 
+ /* XXX: must modify algorithm. it has bugs. by scsuh */
+ static int wait_for_data_done (void)
+ {
+-	while (!(s3c_hsmmc_readw(HM_NORINTSTS) & 0x2))
++	while (!(readw(regs + HM_NORINTSTS) & 0x2))
+ 		return 1;
++
++	return 0;
+ }
+ 
+ static void ClearCommandCompleteStatus(void)
+ {
+-	s3c_hsmmc_writew(1 << 0, HM_NORINTSTS);
+-	while (s3c_hsmmc_readw(HM_NORINTSTS) & 0x1) {
+-		s3c_hsmmc_writew(1 << 0, HM_NORINTSTS);
++	writew(1 << 0, regs + HM_NORINTSTS);
++	while (readw(regs + HM_NORINTSTS) & 0x1) {
++		writew(1 << 0, regs + HM_NORINTSTS);
+ 	}
+ }
+ 
+ static void ClearTransferCompleteStatus(void)
+ {
+-	s3c_hsmmc_writew(s3c_hsmmc_readw(HM_NORINTSTS) | (1 << 1), HM_NORINTSTS);
+-	while (s3c_hsmmc_readw(HM_NORINTSTS) & 0x2) {
+-		s3c_hsmmc_writew(s3c_hsmmc_readw(HM_NORINTSTS) | (1 << 1), HM_NORINTSTS);
++	writew(readw(regs + HM_NORINTSTS) | (1 << 1), regs + HM_NORINTSTS);
++	while (readw(regs + HM_NORINTSTS) & 0x2) {
++		writew(readw(regs + HM_NORINTSTS) | (1 << 1), regs + HM_NORINTSTS);
+ 	}
+ }
+ 
+@@ -758,15 +767,16 @@
+ {
+ 	uint i;
+ 
+-	for (i = 0; i < 0x1000000; i++) {
+-		if (s3c_hsmmc_readw(HM_NORINTSTS) & 0x0002) {
+-		dbg("Transfer Complete\n");
+-		HS_DMA_END = 1;
+-		s3c_hsmmc_writew(s3c_hsmmc_readw(HM_NORINTSTS) | 0x0002, HM_NORINTSTS);
+-		break;
++	for (i = 0; i < 0x10000000; i++) {
++		if (readw(regs + HM_NORINTSTS) & 0x0002) {
++			dbg("Transfer Complete\n");
++			HS_DMA_END = 1;
++			writew(readw(regs + HM_NORINTSTS) | 0x0002, regs + HM_NORINTSTS);
++			break;
+ 		}
+-		if (s3c_hsmmc_readw(HM_NORINTSTS) & 0x8000) {
+-			printf("error found: %04x\n", s3c_hsmmc_readw(HM_ERRINTSTS));
++
++		if (readw(regs + HM_NORINTSTS) & 0x8000) {
++			printf("error found: %04x\n", readw(regs + HM_ERRINTSTS));
+ 			break;
+ 		}
+ 	}
+@@ -799,38 +809,46 @@
+ {
+ 	uint card_size;
+ 
+-	if (movi_hc) {
++	if (mmc_card && movi_hc) {
+ 		card_size = process_ext_csd();
+ 	} else {
+ 		uint i, resp[4];
+ 		uint c_size, c_size_multi, read_bl_len, read_bl_partial, blk_size;
+ 
+ 		for (i=0; i<4; i++) {
+-			resp[i] = s3c_hsmmc_readl(HM_RSPREG0+i*4);
++			resp[i] = readl(regs + HM_RSPREG0+i*4);
+ 			dbg("%08x\n", resp[i]);
+ 		}
+ 
+ 		read_bl_len = ((resp[2] >> 8) & 0xf);
+ 		read_bl_partial = ((resp[2] >> 7) & 0x1);
+-		c_size = ((resp[2] & 0x3) << 10) | ((resp[1] >> 22) & 0x3ff);
+-		c_size_multi = ((resp[1] >> 7) & 0x7);
+-
+-		card_size = (1 << read_bl_len) * (c_size + 1) * (1 << (c_size_multi + 2)) / 1048576;
+ 		blk_size = (1 << read_bl_len);
+ 
+ 		dbg(" read_bl_len: %d\n", read_bl_len);
+ 		dbg(" read_bl_partial: %d\n", read_bl_partial);
+-		dbg(" c_size: %d\n", c_size);
+-		dbg(" c_size_multi: %d\n", c_size_multi);
++		dbg(" One Block Size: %d Byte\n", blk_size);
++
++		if (movi_hc) {
++			card_size = ((resp[1] >> 8) & 0x3fffff) / 2;
++		} else {
++			c_size_multi = ((resp[1] >> 7) & 0x7);
++			c_size = ((resp[2] & 0x3) << 10) | ((resp[1] >> 22) & 0x3ff);
++			card_size = (1 << read_bl_len) * (c_size + 1) * (1 << (c_size_multi + 2)) / 1048576;
+ 
+-		dbg(" One Block Size: %dByte\n", blk_size);
+-		dbg(" Total Card Size: %dMByte\n\n", card_size + 1);
++			dbg(" c_size: %d\n", c_size);
++			dbg(" c_size_multi: %d\n", c_size_multi);
++		}
++
++		dbg(" Total Card Size: %d MByte\n\n", card_size + 1);
+ 	}
+ 
+ 	printf("%d MB ", card_size + 1);
+ 
++	if (!mmc_card && movi_hc)
++		printf("(SDHC)");
++
+ 	if (card_mid == 0x15)
+-		printf("(MoviNAND)");
++		printf("(moviNAND)");
+ 
+ 	printf("\n");
+ }
+@@ -966,27 +984,25 @@
+ 	issue_command(MMC_ALL_SEND_CID, 0, 0, MMC_RSP_R2);
+ 
+ 	/* Manufacturer ID */
+-	card_mid = (s3c_hsmmc_readl(HM_RSPREG3) >> 16) & 0xFF;
++	card_mid = (readl(regs + HM_RSPREG3) >> 16) & 0xFF;
+ 
+-	dbg("Product Name : %c%c%c%c%c%c\n", ((s3c_hsmmc_readl(HM_RSPREG2) >> 24) & 0xFF),
+-	       ((s3c_hsmmc_readl(HM_RSPREG2) >> 16) & 0xFF), ((s3c_hsmmc_readl(HM_RSPREG2) >> 8) & 0xFF), (s3c_hsmmc_readl(HM_RSPREG2) & 0xFF),
+-	       ((s3c_hsmmc_readl(HM_RSPREG1) >> 24) & 0xFF), ((s3c_hsmmc_readl(HM_RSPREG1) >> 16) & 0xFF));
++	dbg("Product Name : %c%c%c%c%c%c\n", ((readl(regs + HM_RSPREG2) >> 24) & 0xFF),
++	       ((readl(regs + HM_RSPREG2) >> 16) & 0xFF), ((readl(regs + HM_RSPREG2) >> 8) & 0xFF), (readl(regs + HM_RSPREG2) & 0xFF),
++	       ((readl(regs + HM_RSPREG1) >> 24) & 0xFF), ((readl(regs + HM_RSPREG1) >> 16) & 0xFF));
+ 
+ 	// Send RCA(Relative Card Address). It places the card in the STBY state
+ 	rca = (mmc_card) ? 0x0001 : 0x0000;
+ 	issue_command(MMC_SET_RELATIVE_ADDR, rca<<16, 0, MMC_RSP_R1);
+ 
+-	if (!mmc_card) {
+-		rca = (s3c_hsmmc_readl(HM_RSPREG0) >> 16) & 0xFFFF;
+-		//printf("=>  rca=0x%08x\n", rca);
+-	}
++	if (!mmc_card)
++		rca = (readl(regs + HM_RSPREG0) >> 16) & 0xFFFF;
+ 
+ 	dbg("Enter to the Stand-by State\n");
+ 
+ 	issue_command(MMC_SEND_CSD, rca<<16, 0, MMC_RSP_R2);
+ 
+ 	if (mmc_card) {
+-		mmc_spec = (s3c_hsmmc_readl(HM_RSPREG3) >> 18) & 0xF;
++		mmc_spec = (readl(regs + HM_RSPREG3) >> 18) & 0xF;
+ 		dbg("mmc_spec=%d\n", mmc_spec);
+ 	}
+ 
+@@ -1004,16 +1020,23 @@
+ 	/* MMC_SET_BLOCKLEN */
+ 	while (!issue_command(MMC_SET_BLOCKLEN, 512, 0, MMC_RSP_R1));
+ 
+-	s3c_hsmmc_writew(0xffff, HM_NORINTSTS);
++	writew(0xffff, regs + HM_NORINTSTS);
++
++	mmc_dev.if_type = IF_TYPE_MMC;
++	mmc_dev.part_type = PART_TYPE_DOS;
++	mmc_dev.dev = 0;
++	mmc_dev.blksz = MMC_BLOCK_SIZE;
++	sprintf(mmc_dev.vendor, "Man %02x %02x %02x Snr %02x %02x %02x", 0x00, 0x01, 0x02, 0x01, 0x02, 0x03);
++	sprintf(mmc_dev.product, "%s", "MMC4");
++	sprintf(mmc_dev.revision, "%x %x", 0x01, 0x01);
++	mmc_dev.block_read = mmc_bread;
+ 
+ 	return 0;
+ }
+ 
+ void movi_write (uint addr, uint start_blk, uint blknum)
+ {
+-	uint blksize; //j,
+-	ulong uTxBufAddr = addr;
+-	ulong uCompareBufAddr = SDI_Compare_buffer_HSMMC;
++	uint blksize;
+ 
+ 	wt_cnt_HSMMC = 0;
+ 	BlockNum_HSMMC = 0;
+@@ -1062,10 +1085,7 @@
+ 	}
+ 	ClearTransferCompleteStatus();
+ 
+-	s3c_hsmmc_writew(s3c_hsmmc_readw(HM_NORINTSTS) | (1 << 3), HM_NORINTSTS);
+-
+-//	DataRead_ForCompare(start_blk);
+-//	DataCompare_HSMMC(uTxBufAddr, uCompareBufAddr, BlockNum_HSMMC * 128);
++	writew(readw(regs + HM_NORINTSTS) | (1 << 3), regs + HM_NORINTSTS);
+ 
+ 	BlockNum_HSMMC = 0;
+ 	wt_cnt_HSMMC = 0;
+@@ -1115,7 +1135,7 @@
+ 	set_cmd_register(cmd, 1, MMC_RSP_R1);
+ 
+ 	if (wait_for_cmd_done()) {
+-		//printf(("Command NOT Complete\n"));
++		printf(("Command NOT Complete\n"));
+ 	} else
+ 		ClearCommandCompleteStatus();
+ 
