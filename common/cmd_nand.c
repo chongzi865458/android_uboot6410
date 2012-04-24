@@ -36,6 +36,12 @@
 #include <jffs2/jffs2.h>
 #include <nand.h>
 
+#define readl(x)	    *((unsigned int *)(x))
+#define writel(v, x)	*((unsigned int *)(x)) = v
+
+/*GPIO F*/
+#define REG_GPFCON       (0x7F0080A0)
+#define REG_GPFDAT       (0x7F0080A4)
 #if (CONFIG_COMMANDS & CFG_CMD_JFFS2) && defined(CONFIG_JFFS2_CMDLINE)
 
 /* parition handling routines */
@@ -237,6 +243,26 @@ int do_nand(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 
 		return 0;
 	}
+	
+	if (strcmp(cmd, "ok") == 0) {/*sound beep ok*/
+		uint reg_f_cfg=readl(REG_GPFCON) & 0x3FFFFFFF | (1<<30);
+		writel(reg_f_cfg,REG_GPFCON);
+
+		uint reg_f_on=readl(REG_GPFDAT) & 0xFFFF7FFF | (1<<15);
+		uint reg_f_off=readl(REG_GPFDAT) & 0xFFFF7FFF;
+
+		int i;
+		for(i=0;i<20;i++){
+			if((i+1)%2==0){
+				writel(reg_f_off,REG_GPFDAT);
+				udelay(1000000);
+			}else{
+				writel(reg_f_on,REG_GPFDAT);
+				udelay(100000);
+			}
+		}
+		return 0;
+	}
 
 	if (strcmp(cmd, "bad") != 0 && strcmp(cmd, "erase") != 0 &&
 	    strncmp(cmd, "dump", 4) != 0 &&
@@ -368,7 +394,7 @@ int do_nand(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 				ret = nand_write_opts(nand, &opts);
 			}
 #ifdef CFG_NAND_YAFFS_WRITE
-		} else if (!read && s != NULL && + (!strcmp(s, ".yaffs") || !strcmp(s, ".yaffs1"))) {
+		} else if (!read && s != NULL && + (!strcmp(s, ".yaffs2") || !strcmp(s, ".yaffs1"))) {
 			nand_write_options_t opts;
  			memset(&opts, 0, sizeof(opts));
  			opts.buffer = (u_char*) addr;
@@ -385,6 +411,44 @@ int do_nand(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 				opts.forceyaffs = 1; */
 
  			ret = nand_write_opts(nand, &opts);
+#endif
+#ifdef CFG_NAND_4K_SIZE
+		} else if (!read && s != NULL && (!strcmp(s, ".uboot")) && nand->writesize == 4096) {
+			size=4096;
+			nand_write(nand, off, &size, (u_char *)addr);
+			off+=4096;
+			addr+=2048;
+			nand_write(nand, off, &size, (u_char *)addr);
+			off+=4096;
+			addr+=2048;
+			nand_write(nand, off, &size, (u_char *)addr);
+			off+=4096;
+			addr+=2048;
+			nand_write(nand, off, &size, (u_char *)addr);
+			off+=4096;
+			addr+=2048;
+
+			size=1024*1024-4*4096;
+			ret = nand_write(nand, off, &size, (u_char *)addr);
+#endif
+#ifdef CFG_NAND_8K_SIZE
+		} else if (!read && s != NULL && (!strcmp(s, ".uboot")) && nand->writesize == 8192) {
+			size=8192;
+			nand_write(nand, off, &size, (u_char *)addr);
+			off+=8192;
+			addr+=2048;
+			nand_write(nand, off, &size, (u_char *)addr);
+			off+=8192;
+			addr+=2048;
+			nand_write(nand, off, &size, (u_char *)addr);
+			off+=8192;
+			addr+=2048;
+			nand_write(nand, off, &size, (u_char *)addr);
+			off+=8192;
+			addr+=2048;
+
+			size=1024*1024-4*8192;
+			ret = nand_write(nand, off, &size, (u_char *)addr);
 #endif
  		} else {
 			if (read)
@@ -508,6 +572,8 @@ U_BOOT_CMD(nand, 5, 1, do_nand,
 	"nand write[.yaffs[1]] - addr off|partition size - write `size' byte yaffs image\n"
 	"    starting at offset `off' from memory address `addr' (.yaffs1 for 512+16 NAND)\n"
 #endif
+	"nand write[.uboot] - addr off|partition size\n"
+	"nand write[.ok] - sound beep ok\n"
  	"nand erase [clean] [off size] - erase `size' bytes from\n"
 	"    offset `off' (entire device if not specified)\n"
 	"nand bad - show bad blocks\n"
