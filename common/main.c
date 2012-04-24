@@ -295,7 +295,49 @@ static void ExecuteCmd(char *cmd)
 	parse_string_outer(cmd, FLAG_PARSE_SEMICOLON | FLAG_EXIT_FROM_LOOP);
 }
 
-
+void arm_USBfuse(void)
+{
+	unsigned char select;
+	while(1)
+	{
+		printf("\n##### Select the fuction #####\n");
+		printf("[1] Flash u-boot\n");
+		printf("[2] Flash kernel\n");	
+		printf("[3] Flash system\n");		
+		printf("[4] Exit\n");
+		printf("Enter your Selection:");
+	
+		select = getc();
+		printf("%c\n", select >= ' ' && select <= 127 ? select : ' ');	
+	
+		switch(select) 
+		{
+			case '1':
+				ExecuteCmd("nand erase 0 100000");
+				ExecuteCmd("dnw 50008000");
+				ExecuteCmd("nand write.uboot 50008000 0 100000");
+				break;
+			
+			case '2':
+				ExecuteCmd("nand erase 100000 500000");
+				ExecuteCmd("dnw 50008000");
+				ExecuteCmd("nand write.uboot 50008000 100000 500000");
+				break;
+					
+			case '3':
+			//	ExecuteCmd(nand erase 500000 600000);
+			//	ExecuteCmd("dnw 50008000");
+			//	ExecuteCmd("nand write.uboot 50008000 0 100000");
+				break;
+			
+			case '4':
+				return;
+			
+			default:
+				break;
+		}
+	}
+}
 void arm_sdfuse(void)
 {
 	unsigned char select;
@@ -407,7 +449,7 @@ void ARMMenu(void)
 		printf("[f] Format the nand flash\n");		
 		printf("[s] Burn image from SD card\n");
 		printf("[u] Use fastboot\n");
-		printf("[c] Configure the radio device\n");	
+		printf("[d] Burn image from USB\n");	
 		printf("[l] configure the lcd size\n");							
 		printf("[b] Boot the system\n");
 		printf("[r] Reboot the u-boot\n");
@@ -454,8 +496,8 @@ void ARMMenu(void)
 				break;
 				
 			//[u] Use fastboot
-			case 'U': case 'u':
-	//			ExecuteCmd("fastboot");
+			case 'D': case 'd':
+				arm_USBfuse();
 				break;	
 				
 			case 'l':case 'L':

@@ -64,7 +64,7 @@
 #define CONFIG_SETUP_MEMORY_TAGS
 #define CONFIG_CMDLINE_TAG
 #define CONFIG_INITRD_TAG
-#define CONFIG_MMC		1
+//#define CONFIG_MMC		1
 /*
  * Architecture magic and machine type
  */
