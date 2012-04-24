@@ -64,7 +64,7 @@
 #define CONFIG_SETUP_MEMORY_TAGS
 #define CONFIG_CMDLINE_TAG
 #define CONFIG_INITRD_TAG
-//#define CONFIG_MMC		1
+#define CONFIG_MMC		1
 /*
  * Architecture magic and machine type
  */
@@ -444,6 +444,8 @@
 #define CFG_NAND_SKIP_BAD_DOT_I	1  /* ".i" read skips bad blocks   */
 #define	CFG_NAND_WP		1
 #define CFG_NAND_YAFFS_WRITE	1  /* support yaffs write */
+#define CFG_NAND_4K_SIZE
+//#define CFG_NAND_8K_SIZE   //jhk
 
 /* Boot configuration (define only one of next) */
 //#define CONFIG_BOOT_NOR

@@ -42,6 +42,7 @@ int movi_set_ofs(uint last)
 
 int movi_init(void)
 {
+	hsmmc_set_base();//jhk	
 	hsmmc_set_gpio();
 	hsmmc_reset();
 	if (hsmmc_init()) {

@@ -304,7 +304,7 @@ void arm_USBfuse(void)
 		printf("[1] Flash u-boot\n");
 		printf("[2] Flash kernel\n");	
 		printf("[3] Flash system\n");		
-		printf("[4] Exit\n");
+		printf("[48] Exit\n");
 		printf("Enter your Selection:");
 	
 		select = getc();
@@ -347,11 +347,8 @@ void arm_sdfuse(void)
 		printf("[1] Flash all image\n");
 		printf("[2] Flash u-boot\n");
 		printf("[3] Flash kernel\n");
-		printf("[4] Flash ramdisk\n");
-		printf("[5] Flash system\n");	
-		printf("[6] Flash userdata\n");	
-		printf("[7] Erase cache\n");		
-		printf("[8] Exit\n");
+		printf("[4] Flash system\n");			
+		printf("[5] Exit\n");
 		printf("Enter your Selection:");
 	
 		select = getc();
@@ -364,30 +361,18 @@ void arm_sdfuse(void)
 				break;
 			
 			case '2':
-				ExecuteCmd("sdfuse flash bootloader u-boot.bin");
+				ExecuteCmd("nand erase 0 100000");
+				ExecuteCmd("fatload mmc 0:1 50008000 u-boot.bin");
+				ExecuteCmd("nand write.uboot 50008000 0 100000");
 				break;
 					
 			case '3':
-				ExecuteCmd("sdfuse flash kernel kernel.img");
+				ExecuteCmd("nand erase 100000 500000");
+				ExecuteCmd("fatload mmc 0:1 50008000 zImage");
+				ExecuteCmd("nand write.e 50008000 100000 500000");
 				break;
-			
+
 			case '4':
-				ExecuteCmd("sdfuse flash ramdisk ramdisk-yaffs.img");
-				break;
-			
-			case '5':
-				ExecuteCmd("sdfuse flash system system.img");
-				break;
-			
-			case '6':
-				ExecuteCmd("sdfuse flash userdata userdata.img");
-				break;
-
-			case '7':
-				ExecuteCmd("sdfuse erase cache");
-				break;
-
-			case '8':
 				return;
 			
 			default:

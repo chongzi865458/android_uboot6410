@@ -389,6 +389,7 @@ hs_mmc.o: hs_mmc.c \
   /home/chongzi/android_boot-android2.3-256M_v1.01/include/asm/sizes.h \
   /home/chongzi/android_boot-android2.3-256M_v1.01/include/s3c64x0.h \
   /home/chongzi/android_boot-android2.3-256M_v1.01/include/linux/mmc/mmc.h \
+  /home/chongzi/android_boot-android2.3-256M_v1.01/include/s3c6410.h \
   /home/chongzi/android_boot-android2.3-256M_v1.01/include/linux/mmc/protocol.h \
   /home/chongzi/android_boot-android2.3-256M_v1.01/include/asm/io.h \
   /home/chongzi/android_boot-android2.3-256M_v1.01/include/asm/byteorder.h \

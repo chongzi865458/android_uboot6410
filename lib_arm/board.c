@@ -46,9 +46,9 @@
 #include <net.h>
 #include <asm/io.h>
 
-#if defined(CONFIG_BOOT_MOVINAND)
+//#if defined(CONFIG_BOOT_MOVINAND)
 #include <movi.h>
-#endif
+//#endif
 
 #ifdef CONFIG_DRIVER_SMC91111
 #include "../drivers/smc91111.h"
@@ -260,9 +260,9 @@ void start_armboot (void)
 	unsigned long addr;
 #endif
 
-#if defined(CONFIG_BOOT_MOVINAND)
+//#if defined(CONFIG_BOOT_MOVINAND)
 	uint *magic = (uint *) (PHYS_SDRAM_1);
-#endif
+//#endif
 
 	/* Pointer is writable since we allocated a register for it */
 #ifdef CONFIG_MEMORY_UPPER_CODE /* by scsuh */
@@ -343,7 +343,7 @@ void start_armboot (void)
 	onenand_init();		/* go init the One-NAND */
 #endif
 
-#if defined(CONFIG_BOOT_MOVINAND)
+//#if defined(CONFIG_BOOT_MOVINAND)
 	puts ("SD/MMC:  ");
 
 	if ((0x24564236 == magic[0]) && (0x20764316 == magic[1])) {
@@ -353,7 +353,7 @@ void start_armboot (void)
 		movi_set_ofs(MOVI_TOTAL_BLKCNT);
 		movi_init();
 	}
-#endif
+//#endif
 
 #else
 
