@@ -64,7 +64,7 @@
 #define CONFIG_SETUP_MEMORY_TAGS
 #define CONFIG_CMDLINE_TAG
 #define CONFIG_INITRD_TAG
-#define CONFIG_MMC		1
+#define CONFIG_MMC		1//jhk
 /*
  * Architecture magic and machine type
  */
@@ -83,7 +83,9 @@
 /*
  * Size of malloc() pool
  */
-#define CFG_MALLOC_LEN		(CFG_ENV_SIZE + 1024*1024)
+//jkeqiang change it to avoid stack flow
+#define CFG_MALLOC_LEN		(CFG_ENV_SIZE + 512*1024)
+//#define CFG_MALLOC_LEN		(CFG_ENV_SIZE + 1024*1024)
 #define CFG_GBL_DATA_SIZE	128	/* size in bytes reserved for initial data */
 
 #define CFG_STACK_SIZE		512*1024
@@ -91,25 +93,16 @@
 /*
  * Hardware drivers
  */
-//#define CONFIG_DRIVER_SMC911X 1 /* we have a SMC9115 on-board */
-#define CONFIG_DRIVER_DM9000AE 1
+//#define CONFIG_DRIVER_SMC911X	1	/* we have a SMC9115 on-board */
+//#define CONFIG_CH7033
 
-#ifndef CONFIG_DRIVER_DM9000AE
-#ifdef CONFIG_DRIVER_SMC911X 
-#undef CONFIG_DRIVER_CS8900 
-#define CONFIG_DRIVER_SMC911X_BASE 0x18800300
+#ifdef 	CONFIG_DRIVER_SMC911X	
+#undef	CONFIG_DRIVER_CS8900	
+#define CONFIG_DRIVER_SMC911X_BASE	0x18800300
 #else
-#define CONFIG_DRIVER_CS8900 0 /* we have a CS8900 on-board */
-#define CS8900_BASE 0x18800300
-#define CS8900_BUS16 1 /* the Linux driver does accesses as shorts */
-#endif
-#else
-#define CONFIG_DRIVER_DM9000 1
-#define CONFIG_DM9000_BASE (0x18000000) /*XM0CSN1*/
-#define DM9000_IO (CONFIG_DM9000_BASE)
-#define DM9000_DATA (CONFIG_DM9000_BASE+0x4) /*ADDR2*/
-//#define CONFIG_DM9000_DEBUG 1
-#define CONFIG_DM9000_USE_16BIT 1
+#define CONFIG_DRIVER_CS8900	0	/* we have a CS8900 on-board */
+#define CS8900_BASE	  	0x18800300
+#define CS8900_BUS16		1 	/* the Linux driver does accesses as shorts */
 #endif
 
 /*
@@ -125,9 +118,10 @@
 #define CONFIG_CMDLINE_EDITING
 
 #undef CONFIG_S3C64XX_I2C		/* this board has H/W I2C */
+//#define CONFIG_S3C64XX_I2C /*add by phantom*/
 #ifdef CONFIG_S3C64XX_I2C
 #define CONFIG_HARD_I2C		1
-#define CFG_I2C_SPEED		50000
+#define CFG_I2C_SPEED		10000
 #define CFG_I2C_SLAVE		0xFE
 #endif
 
@@ -150,11 +144,9 @@
 
 #define CONFIG_BAUDRATE		115200
 
-
 /***********************************************************
  * Command definition
  ***********************************************************/
-//jhk add FAT
 #define CONFIG_COMMANDS \
 			(CONFIG_CMD_DFL	| \
 			CFG_CMD_CACHE	| \
@@ -183,13 +175,15 @@
 /* this must be included AFTER the definition of CONFIG_COMMANDS (if any) */
 #include <cmd_confdefs.h>
 
-#define CONFIG_BOOTDELAY	10
-#define CONFIG_BOOTARGS    	"root=/dev/mtdblock2 rootfstype=yaffs2 init=/init nconsole=tty1 console=ttySAC0,115200 android.ril=s3c2410_serial1"
-#define CONFIG_ETHADDR		00:40:5c:26:0a:5e
-#define CONFIG_NETMASK    255.255.255.0
-#define CONFIG_IPADDR		  192.168.0.20
-#define CONFIG_SERVERIP		192.168.0.1
-#define CONFIG_GATEWAYIP	192.168.0.1
+#define CONFIG_BOOTDELAY	1
+#define CONFIG_BOOTARGS    	"root=/dev/mtdblock2 rootfstype=yaffs2 init=/linuxrc nconsole=tty1 console=ttySAC0,115200 android.ril=s3c2410_serial1"
+//#define CONFIG_BOOTARGS    	"root=/dev/mtdblock2 rootfstype=cramfs console=ttySAC0,115200"
+
+#define CONFIG_ETHADDR		00:40:5c:26:0a:5b
+#define CONFIG_NETMASK          255.255.255.0
+#define CONFIG_IPADDR		192.168.1.20
+#define CONFIG_SERVERIP		192.168.1.10
+#define CONFIG_GATEWAYIP	192.168.1.1
 
 #define CONFIG_ZERO_BOOTDELAY_CHECK
 
@@ -205,7 +199,7 @@
  * Miscellaneous configurable options
  */
 #define CFG_LONGHELP				/* undef to save memory		*/
-#define CFG_PROMPT		"SMDK6410# "	/* Monitor Command Prompt	*/
+#define CFG_PROMPT		"SMDK6410 # "	/* Monitor Command Prompt	*/
 #define CFG_CBSIZE		256		/* Console I/O Buffer Size	*/
 #define CFG_PBSIZE		384		/* Print Buffer Size */
 #define CFG_MAXARGS		16		/* max number of command args	*/
@@ -326,9 +320,11 @@
  */
 #ifndef CONFIG_SMDK6410_X5A
 
-#define DMC1_MEM_CFG		0x00010012	/* Supports one CKE control, Chip1, Burst4, Row/Column bit */
+//#define DMC1_MEM_CFG		0x00010012	/* Supports one CKE control, Chip1, Burst4, Row/Column bit */
+#define DMC1_MEM_CFG		0x0001001a	/* Supports one CKE control, Chip1, Burst4, Row/Column bit */
 #define DMC1_MEM_CFG2		0xB45
-#define DMC1_CHIP0_CFG		0x150F8
+//#define DMC1_CHIP0_CFG		0x150F8
+#define DMC1_CHIP0_CFG		0x150F0
 #define DMC_DDR_32_CFG		0x0 		/* 32bit, DDR */
 
 /* Memory Parameters */
@@ -394,7 +390,8 @@
 
 #define CONFIG_NR_DRAM_BANKS	1	   /* we have 2 bank of DRAM */
 #define PHYS_SDRAM_1		MEMORY_BASE_ADDRESS /* SDRAM Bank #1 */
-#define PHYS_SDRAM_1_SIZE	0x10000000 /* 128 MB */
+//#define PHYS_SDRAM_1_SIZE	0x08000000 /* 64 MB */
+#define PHYS_SDRAM_1_SIZE	0x10000000
 
 #define CFG_FLASH_BASE		0x00000000
 
@@ -411,7 +408,7 @@
 #define CFG_FLASH_WRITE_TOUT	(5*CFG_HZ) /* Timeout for Flash Write */
 
 #define CFG_ENV_ADDR		0
-#define CFG_ENV_SIZE		0x4000	/* Total Size of Environment Sector */
+#define CFG_ENV_SIZE		0x80000	/* Total Size of Environment Sector */
 
 /*
  * SMDK6400 board specific data
@@ -430,7 +427,7 @@
 #endif
 #define CFG_PHY_UBOOT_BASE	MEMORY_BASE_ADDRESS + 0x7e00000
 
-#define CFG_ENV_OFFSET		0x0003C000
+#define CFG_ENV_OFFSET		0x00080000
 
 /* NAND configuration */
 #define CFG_MAX_NAND_DEVICE     1
@@ -446,34 +443,32 @@
 #define CFG_NAND_YAFFS_WRITE	1  /* support yaffs write */
 #define CFG_NAND_4K_SIZE
 //#define CFG_NAND_8K_SIZE   //jhk
-
 /* Boot configuration (define only one of next) */
-//#define CONFIG_BOOT_NOR
+
 #define CONFIG_BOOT_NAND
-//#define CONFIG_BOOT_MOVINAND
-//#define CONFIG_BOOT_ONENAND
-//#define CONFIG_BOOT_ONENAND_IROM
-
 #define	CONFIG_NAND
-//#define CONFIG_ONENAND
-#define CONFIG_MOVINAND
-
+#define CONFIG_MOVINAND//jhk
 /*
  * BL1 should be written in the block0 with 8 bit ecc parity codes
  * Enable this definition if you use iROM-NAND boot
  */
-//#define CONFIG_NAND_BL1_8BIT_ECC
+#define CONFIG_NAND_BL1_8BIT_ECC
 
 /* Settings as above boot configuration */
 #if defined(CONFIG_BOOT_NAND)
 #define CFG_ENV_IS_IN_NAND
-#define CFG_NAND_LARGEPAGE_SAVEENV
-//#define CFG_NAND_HWECC
+//jkeqiang close it
+//#define CFG_NAND_LARGEPAGE_SAVEENV
+
+
+#define CFG_NAND_HWECC
 //#define CFG_NAND_FLASH_BBT
-#define CONFIG_BOOTCOMMAND	"nand read 0xc0008000 0x00080000 0x00800000;bootm 0xc0008000"
+
+#define CONFIG_BOOTCOMMAND	"nand read 0xc0008000 0x100000 0x500000;bootm 0xc0008000"
 #elif defined(CONFIG_BOOT_MOVINAND)
 #define CFG_ENV_IS_IN_MOVINAND
 #define CONFIG_BOOTCOMMAND	"movi read kernel c0008000;movi read rootfs c0800000;bootm c0008000"
+
 #elif defined(CONFIG_BOOT_ONENAND) || defined(CONFIG_BOOT_ONENAND_IROM)
 #define CFG_ONENAND_BASE 	(0x70100000)
 #define CFG_MAX_ONENAND_DEVICE	1

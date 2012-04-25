@@ -595,7 +595,7 @@ void main_loop (void)
 	bootdelay = s ? (int)simple_strtol(s, NULL, 10) : CONFIG_BOOTDELAY;
 
 	debug ("### main_loop entered: bootdelay=%d\n\n", bootdelay);
-
+     
 # ifdef CONFIG_BOOT_RETRY_TIME
 	init_cmd_timeout ();
 # endif	/* CONFIG_BOOT_RETRY_TIME */
@@ -650,7 +650,7 @@ void main_loop (void)
 	    video_banner();
 	}
 #endif
-            ARMMenu();
+           ARMMenu();
 	/*
 	 * Main Loop for Monitor Command Processing
 	 */

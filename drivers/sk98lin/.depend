@@ -1,87 +1,87 @@
 skge.o: skge.c \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/config.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/configs/smdk6410.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/cmd_confdefs.h
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/config.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/configs/smdk6410.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/cmd_confdefs.h
 skaddr.o: skaddr.c \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/config.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/configs/smdk6410.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/cmd_confdefs.h
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/config.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/configs/smdk6410.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/cmd_confdefs.h
 skgehwt.o: skgehwt.c \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/config.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/configs/smdk6410.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/cmd_confdefs.h
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/config.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/configs/smdk6410.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/cmd_confdefs.h
 skgeinit.o: skgeinit.c \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/config.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/configs/smdk6410.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/cmd_confdefs.h
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/config.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/configs/smdk6410.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/cmd_confdefs.h
 skgepnmi.o: skgepnmi.c \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/config.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/configs/smdk6410.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/cmd_confdefs.h
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/config.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/configs/smdk6410.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/cmd_confdefs.h
 skgesirq.o: skgesirq.c \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/config.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/configs/smdk6410.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/cmd_confdefs.h
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/config.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/configs/smdk6410.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/cmd_confdefs.h
 ski2c.o: ski2c.c \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/config.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/configs/smdk6410.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/cmd_confdefs.h
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/config.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/configs/smdk6410.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/cmd_confdefs.h
 sklm80.o: sklm80.c \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/config.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/configs/smdk6410.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/cmd_confdefs.h
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/config.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/configs/smdk6410.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/cmd_confdefs.h
 skqueue.o: skqueue.c \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/config.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/configs/smdk6410.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/cmd_confdefs.h
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/config.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/configs/smdk6410.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/cmd_confdefs.h
 skrlmt.o: skrlmt.c \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/config.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/configs/smdk6410.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/cmd_confdefs.h
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/config.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/configs/smdk6410.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/cmd_confdefs.h
 sktimer.o: sktimer.c \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/config.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/configs/smdk6410.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/cmd_confdefs.h
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/config.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/configs/smdk6410.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/cmd_confdefs.h
 skvpd.o: skvpd.c \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/config.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/configs/smdk6410.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/cmd_confdefs.h
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/config.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/configs/smdk6410.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/cmd_confdefs.h
 skxmac2.o: skxmac2.c \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/config.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/configs/smdk6410.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/cmd_confdefs.h
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/config.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/configs/smdk6410.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/cmd_confdefs.h
 skcsum.o: skcsum.c \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/config.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/configs/smdk6410.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/cmd_confdefs.h
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/config.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/configs/smdk6410.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/cmd_confdefs.h
 uboot_skb.o: uboot_skb.c \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/config.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/configs/smdk6410.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/cmd_confdefs.h
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/config.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/configs/smdk6410.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/cmd_confdefs.h
 uboot_drv.o: uboot_drv.c \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/common.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/config.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/configs/smdk6410.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/cmd_confdefs.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/linux/bitops.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/asm/bitops.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/linux/types.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/linux/config.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/linux/posix_types.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/linux/stddef.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/asm/posix_types.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/asm/types.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/linux/string.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/asm/string.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/asm/ptrace.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/asm/proc/ptrace.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/common.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/config.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/configs/smdk6410.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/cmd_confdefs.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/linux/bitops.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/asm/bitops.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/linux/types.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/linux/config.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/linux/posix_types.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/linux/stddef.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/asm/posix_types.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/asm/types.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/linux/string.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/asm/string.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/asm/ptrace.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/asm/proc/ptrace.h \
   /usr/local/arm/4.2.2-eabi/usr/bin-ccache/../lib/gcc/arm-unknown-linux-gnueabi/4.2.2/include/stdarg.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/part.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/ide.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/flash.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/image.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/asm/u-boot.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/asm/global_data.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/asm/mach-types.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/asm/setup.h \
-  /home/chongzi/android_boot-android2.3-256M_v1.01/include/asm/u-boot-arm.h
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/part.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/ide.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/flash.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/image.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/asm/u-boot.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/asm/global_data.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/asm/mach-types.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/asm/setup.h \
+  /home/jhk/android/uboot_android_menu/android_uboot6410/include/asm/u-boot-arm.h
