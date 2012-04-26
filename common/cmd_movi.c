@@ -1,6 +1,6 @@
 #include <common.h>
 
-#ifdef CONFIG_MOVINAND
+//#ifdef CONFIG_MOVINAND
 
 #include <command.h>
 #include <movi.h>
@@ -144,4 +144,4 @@ U_BOOT_CMD(
 	"movi write {sector#} {bytes(hex)} {addr} - Write data to moviNAND sector#\n"
 );
 
-#endif /* (CONFIG_COMMANDS & CFG_CMD_MOVINAND) */
+//#endif /* (CONFIG_COMMANDS & CFG_CMD_MOVINAND) */
